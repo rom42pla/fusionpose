@@ -43,8 +43,8 @@ class HandGestureRecognitionModel(pl.LightningModule):
         use_horizontal_landmarks: bool,
         use_vertical_landmarks: bool,
         img_channels: int,
-        image_backbone_name: str | None = "resnet18",
-        landmarks_backbone_name: str | None = "mlp",
+        image_backbone_name: str = "resnet18",
+        landmarks_backbone_name: str = "mlp",
         use_data_augmentation: bool = True,
         lr: float = 1e-3,
         num_epochs: int = 1,
@@ -74,12 +74,8 @@ class HandGestureRecognitionModel(pl.LightningModule):
             self.img_channels = 0
             image_backbone_name = None
         else:
-            self.img_channels = sum(
-                [
-                    img_channels if self.use_horizontal_images else 0,
-                    img_channels if self.use_vertical_images else 0,
-                ]
-            )
+            assert img_channels > 0, f"got {img_channels=}, expected > 0"
+            self.img_channels = img_channels
 
         # parses number of landmarks
         if (
@@ -457,10 +453,10 @@ class HandGestureRecognitionModel(pl.LightningModule):
     @abstractmethod
     def forward(
         self,
-        landmarks_horizontal: torch.Tensor | None = None,
-        landmarks_vertical: torch.Tensor | None = None,
-        image_horizontal: torch.Tensor | None = None,
-        image_vertical: torch.Tensor | None = None,
+        landmarks_horizontal: torch.Tensor = None,
+        landmarks_vertical: torch.Tensor = None,
+        image_horizontal: torch.Tensor = None,
+        image_vertical: torch.Tensor = None,
         **kwargs,
     ):
         outs = {

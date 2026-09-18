@@ -8,6 +8,8 @@ import argparse
 from datetime import datetime
 from typing import List
 import torch
+import torchmetrics
+import matplotlib.pyplot as plt
 from torch.utils.data import Subset, DataLoader
 from lightning.pytorch.loggers import WandbLogger
 from lightning.pytorch.callbacks import ModelCheckpoint, StochasticWeightAveraging
@@ -32,9 +34,9 @@ from utils import (
 
 def main(
     cfg: str,
-    run_name: str | None = None,
+    run_name: str = None,
     disable_checkpointing: bool = True,
-    limit_subjects: int | None = None,
+    limit_subjects: int = None,
     seed: int = 42,
 ):
     # setup
@@ -125,7 +127,7 @@ def main(
         use_vertical_images=cfg_dict["use_vertical_image"],
         use_horizontal_landmarks=cfg_dict["use_horizontal_landmarks"],
         use_vertical_landmarks=cfg_dict["use_vertical_landmarks"],
-        train_image_backbone=cfg_dict["train_image_backbone"],
+        # train_image_backbone=cfg_dict["train_image_backbone"],
         num_epochs=cfg_dict["max_epochs"],
         lr=cfg_dict["lr"],
     )
@@ -234,6 +236,45 @@ def main(
         metrics = trainer.test(model, dataloader_test)
         with open(join(experiment_run_path, "metrics.yaml"), "w") as fp:
             yaml.dump(metrics, fp, default_flow_style=False)
+
+        # computes and saves the confusion matrix on the test set
+        model.eval()
+        model.to(device)
+        all_preds, all_labels = [], []
+        with torch.no_grad():
+            for batch in dataloader_test:
+                if "image" in batch:
+                    if model.use_horizontal_images:
+                        batch["image_horizontal"] = batch["image"]
+                    elif model.use_vertical_images:
+                        batch["image_vertical"] = batch["image"]
+                if "landmarks" in batch:
+                    if model.use_horizontal_landmarks:
+                        batch["landmarks_horizontal"] = batch["landmarks"]
+                    elif model.use_vertical_landmarks:
+                        batch["landmarks_vertical"] = batch["landmarks"]
+                batch.pop("image", None)
+                batch.pop("landmarks", None)
+                label = batch.pop("label")
+                outs = model(**batch)
+                all_preds.append(outs["cls_logits"].argmax(dim=1).cpu())
+                all_labels.append(label.cpu())
+        confmat = torchmetrics.functional.confusion_matrix(
+            preds=torch.cat(all_preds, dim=0),
+            target=torch.cat(all_labels, dim=0),
+            task="multiclass",
+            num_classes=dataset.num_labels,
+        )
+        fig, ax = plt.subplots(figsize=(8, 8))
+        ax.imshow(confmat, cmap="Blues")
+        ax.set_xlabel("predicted")
+        ax.set_ylabel("true")
+        ax.set_title(f"confusion matrix - {run_name}")
+        fig.savefig(join(experiment_run_path, "confusion_matrix.png"))
+        plt.close(fig)
+        with open(join(experiment_run_path, "confusion_matrix.yaml"), "w") as fp:
+            yaml.dump(confmat.tolist(), fp, default_flow_style=False)
+
         # eventually removes the checkpoint
         if disable_checkpointing:
             os.remove(checkpoint_callback.best_model_path)

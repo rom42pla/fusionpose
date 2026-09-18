@@ -77,7 +77,7 @@ def get_k_fold_runs(k: int, dataset) -> List[List[int]]:
     assert len(runs) == k
     return runs
 
-def get_train_test_splits(dataset, limit_subjects: int | None = None) -> List[List[int]]:
+def get_train_test_splits(dataset, limit_subjects: int = None) -> List[List[int]]:
     subject_ids_to_use = dataset._get_subject_ids()
     indices_per_subject = (
         dataset.get_indices_per_subject()
@@ -107,7 +107,7 @@ def get_train_test_splits(dataset, limit_subjects: int | None = None) -> List[Li
     runs = [run]
     return runs
 
-def get_optimistic_splits(dataset, limit_subjects: int | None = None) -> List[List[int]]:
+def get_optimistic_splits(dataset, limit_subjects: int = None) -> List[List[int]]:
     subject_ids_to_use = sorted(dataset._get_subject_ids())
     assert len(subject_ids_to_use) == 40, f"got {len(subject_ids_to_use)}: {subject_ids_to_use}"
 
@@ -155,7 +155,7 @@ def get_optimistic_splits(dataset, limit_subjects: int | None = None) -> List[Li
     # assert len(runs) == (limit_subjects if limit_subjects is not None else len(dataset.subject_ids))
     return runs
 
-def get_loso_runs(dataset, limit_subjects: int | None = None) -> List[List[int]]:
+def get_loso_runs(dataset, limit_subjects: int) -> List[List[int]]:
     subject_ids_to_use = dataset._get_subject_ids()
     indices_per_subject = (
         dataset.get_indices_per_subject()

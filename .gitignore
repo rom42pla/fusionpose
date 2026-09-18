@@ -5,7 +5,7 @@ venv
 wandb
 checkpoints
 lightning_logs
-ml2hp
+# ml2hp
 _*
 *.pth
 *.zip

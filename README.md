@@ -13,11 +13,11 @@ The required dependendencies to run the code are defined in the `requirements.tx
 For simplicity, use `conda` to create a virtual environment:
 
 ```bash
-conda create --name ml2hp
-conda activate ml2hp
+conda create --name fusionpose python=3.9
+conda activate fusionpose
 ```
 
-Once in the `ml2hp` environment, install the dependencies:
+Once in the `fusionpose` environment, install the dependencies:
 
 ```bash
 conda install pip
