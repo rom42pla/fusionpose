@@ -28,13 +28,21 @@ from utils import (
 )
 
 
-def main(cfg: str, limit_subjects: int = None, max_epochs: int = 3, seed: int = 42):
+def main(
+    cfg: str,
+    dataset_path: str = None,
+    limit_subjects: int = None,
+    max_epochs: int = 3,
+    seed: int = 42,
+):
     num_workers = os.cpu_count()
     torch.set_float32_matmul_precision("medium")
     set_global_seed(seed=seed)
 
     with open(cfg, "r") as fp:
         cfg_dict = yaml.safe_load(fp)
+    if dataset_path is not None:
+        cfg_dict["dataset_path"] = dataset_path
     pprint(cfg_dict)
 
     # sets up the dataset
@@ -248,6 +256,13 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--cfg", type=str, help="Path to the configuration", required=True
+    )
+    parser.add_argument(
+        "--dataset_path",
+        type=str,
+        default=None,
+        help="Overrides the dataset_path in the configuration file",
+        required=False,
     )
     parser.add_argument(
         "--limit_subjects",
