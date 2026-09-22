@@ -36,7 +36,7 @@ def main(
     max_epochs: int = 3,
     seed: int = 42,
 ):
-    num_workers = os.cpu_count()
+    num_workers = min(8, os.cpu_count())
     torch.set_float32_matmul_precision("medium")
     set_global_seed(seed=seed)
 
