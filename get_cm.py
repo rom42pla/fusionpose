@@ -2,6 +2,7 @@
 and only produces a confusion matrix (no wandb logging, no checkpointing).
 """
 import argparse
+import copy
 import os
 from os.path import join
 from pprint import pprint
@@ -123,8 +124,7 @@ def main(
         lr=cfg_dict["lr"],
     )
 
-    initial_state_dict_path = "./initial_weights.pth"
-    torch.save(model.state_dict(), initial_state_dict_path)
+    initial_state_dict = copy.deepcopy(model.state_dict())
 
     # trains and predicts on every run, accumulating preds/labels across all of them
     all_preds, all_labels = [], []
@@ -163,9 +163,7 @@ def main(
             dataloader_test = dataloader_val
 
         # re-initializes the model for this run
-        model.load_state_dict(
-            torch.load(initial_state_dict_path, map_location=device), strict=False
-        )
+        model.load_state_dict(initial_state_dict, strict=False)
         model.to(device)
 
         trainer = Trainer(
